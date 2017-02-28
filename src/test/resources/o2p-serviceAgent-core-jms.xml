@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:p="http://www.springframework.org/schema/p" 
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	
+	<bean id="serviceAgentpropertyConfigurer" class="com.ailk.eaap.o2p.common.spring.config.EncryptPropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+            <list>
+            	<value>classpath:eaap_common.properties</value>
+            </list>
+        </property>
+	</bean>
+	
+	<!--JMS端点
+	<bean id="jMSSenderEndpointProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.JMSSenderEndpointProcessor">
+        <property name="jmsTemplateFactory" ref="jmsTemplateFactory"/>
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+    -->  
+	<!--activeMQ 工厂-->  
+	<bean id="activeMQConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">  
+	</bean>
+	<bean id="activeMQSslConnectionFactory" class="org.apache.activemq.ActiveMQSslConnectionFactory">  
+	</bean>
+	 <!--activeMQ  队列目的地-->  
+    <bean id="activeMQQueue" class="org.apache.activemq.command.ActiveMQQueue">  
+    	<constructor-arg>
+    		<value>${jms.destination}</value>  
+	    </constructor-arg>  
+    </bean>  
+    <!--activeMQ  订阅主题-->  
+    <bean id="activeMQTopic" class="org.apache.activemq.command.ActiveMQTopic">  
+    	<constructor-arg>
+    		<value>${jms.destination}</value>  
+	    </constructor-arg>
+    </bean>  
+	  
+	<!-- Spring用于管理真正的ConnectionFactory的ConnectionFactory -->  
+	<bean id="singleConnectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">  
+		<property name="targetConnectionFactory"><ref bean="defaultConnectionFactory"/></property>
+	</bean>
+	
+	<bean id="jMSConnectionFactory" class="com.ailk.eaap.op2.serviceagent.route.service.JMSConnectionFactory">
+		<property name="activeMQConnectionFactory"><ref bean="activeMQConnectionFactory"/></property>
+		<property name="activeMQSslConnectionFactory"><ref bean="activeMQSslConnectionFactory"/></property>
+	</bean>  
+	
+	<!-- jms 模板 -->
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">  
+		<property name="defaultDestination"><ref bean="defaultDestination"/></property>
+		<property name="connectionFactory"><ref bean="singleConnectionFactory"/></property>
+	</bean>
+	
+	<!-- jmsTemplate 工厂 -->
+	<bean id="jmsTemplateFactory" class="com.ailk.eaap.op2.serviceagent.route.service.JmsTemplateFactory">  
+		<property name="jmsTemplate"><ref bean="jmsTemplate"/></property>
+		<property name="jMSConnectionFactory"><ref bean="jMSConnectionFactory"/></property>
+        <property name="singleConnectionFactory"><ref bean="singleConnectionFactory"/></property>
+		<property name="activeMQQueue"><ref bean="activeMQQueue"/></property>
+		<property name="activeMQTopic"><ref bean="activeMQTopic"/></property>
+	</bean>
+	
+	<!--默认 connectionFactory -->
+	<bean id="defaultConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory"/>  
+	<!--默认 Destination -->
+	<bean id="defaultDestination" class="org.apache.activemq.command.ActiveMQQueue"/>  
+</beans>

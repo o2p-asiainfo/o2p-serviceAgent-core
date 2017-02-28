@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:p="http://www.springframework.org/schema/p" 
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	
+	<bean id="serviceAgentpropertyConfigurer" class="com.ailk.eaap.o2p.common.spring.config.EncryptPropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+            <list>
+            	<value>classpath:eaap_common.properties</value>
+            </list>
+        </property>
+	</bean>
+	
+	<!-- 配置线程池 -->  
+	<bean id ="taskExecutor"  class ="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" >  
+	    <!-- 线程池维护线程的最少数量 -->  
+	<property name ="corePoolSize" value ="5" />  
+	    <!-- 线程池维护线程所允许的空闲时间 -->  
+	<property name ="keepAliveSeconds" value ="30000" />  
+	    <!-- 线程池维护线程的最大数量 -->  
+	<property name ="maxPoolSize" value ="1000" />  
+	    <!-- 线程池所使用的缓冲队列 -->  
+	<property name ="queueCapacity" value ="200" />  
+	</bean>
+	
+	<bean id="simpleAsyncTaskExecutor"
+		class="org.springframework.core.task.SimpleAsyncTaskExecutor">
+	</bean>
+	
+	<bean id="batchService"
+		class="com.ailk.eaap.op2.serviceagent.route.service.batch.BatchServiceImpl">
+		<property name ="repeatService" ref ="repeatService" />  
+		<property name ="processorFactory" ref ="processorFactory" />  
+	</bean>
+	
+	<bean id="repeatService"
+		class="com.ailk.eaap.op2.serviceagent.route.service.batch.RepeatServiceImpl">
+		<property name ="taskExecutor" ref ="simpleAsyncTaskExecutor" />  
+		<property name ="routeServ" ref ="routeServ" /> 
+	</bean>
+	
+	<bean id="flatFileReaderEndpoint"
+        class="com.ailk.eaap.op2.serviceagent.route.service.FlatFileReaderEndpoint">
+        
+    </bean>
+	
+	 <bean id="routeServ"
+        class="com.ailk.eaap.op2.serviceagent.route.service.RouteServ">
+        <property name="serviceExchangeService">
+        	<ref bean="serviceExchangeService"/>
+        </property>
+    </bean>
+    
+    
+    <bean id="processorFactory"
+        class="com.ailk.eaap.op2.serviceagent.route.service.ProcessorFactory">
+        <property name ="flatFileReaderEndpoint" ref ="flatFileReaderEndpoint" /> 
+    </bean>
+    
+    <bean id="serviceExchangeService"
+        class="com.ailk.eaap.op2.serviceagent.route.service.ServiceExchangeService">
+        <property name="processorFactory">
+        	<ref bean="processorFactory"/>
+        </property>
+       <property name="defaultTime">
+        	<value>${defaultTime}</value>
+        </property>
+        <property name="serviceAgentMode">
+        	<value>${serviceAgent.mode}</value>
+        </property>
+        <property name="serviceAgentServerAddress">
+        	<value>${serviceAgent.server.address}</value>
+        </property>
+    </bean>
+</beans>

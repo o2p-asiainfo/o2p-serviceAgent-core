@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+       					http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+	
+	
+	<bean id="serviceAgentpropertyConfigurer" class="com.ailk.eaap.o2p.common.spring.config.EncryptPropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+            <list>
+            	<value>classpath:eaap_common.properties</value>
+            </list>
+        </property>
+	</bean>
+	
+	<bean id="DEPService" class="com.ailk.eaap.op2.serviceagent.servlet.EAAPService">
+		<property name="dihService"><ref bean="dihService"/></property>
+    </bean>
+
+	<bean id="RESTService" class="com.ailk.eaap.op2.serviceagent.servlet.RESTService">
+		<property name="dihService"><ref bean="dihService"/></property>
+    </bean>
+
+	<bean id="component" class="org.restlet.ext.spring.SpringComponent">  
+		<!-- <property name="defaultTarget" ref="restRouter" />  -->
+		<property name="defaultTarget" ref="restRouter" />
+	</bean>
+
+	<bean id="webservicecomponent" class="org.restlet.ext.spring.SpringComponent">  
+		<!-- <property name="defaultTarget" ref="restRouter" />  -->
+		<property name="defaultTarget" ref="webserviceRouter" />
+	</bean>
+	
+	
+	<bean id="webserviceRouter" class="org.restlet.ext.spring.SpringBeanRouter"> 
+	 <property name="attachments">  
+            <map>
+            	<entry key="/{apiName}">  
+                    <value>webserviceResource</value>  
+                </entry>
+                <entry key="">  
+                    <value>webserviceResource</value>  
+                </entry>  
+            </map>
+              
+        </property>  
+	</bean>  
+	
+	<!-- router -->  
+	<bean id="restRouter" class="org.restlet.ext.spring.SpringBeanRouter"> 
+	 <property name="attachments">  
+            <map>
+            	<entry key="/{apiName}">  
+                    <value>componentResource</value>  
+                </entry>
+                <entry key="">  
+                    <value>componentResource</value>  
+                </entry>  
+            </map>
+              
+        </property>  
+	</bean>  
+	<!-- resource -->  
+	<bean name="componentResource" id="componentResource"   class="com.ailk.eaap.op2.serviceagent.servlet.ComponentResource" scope="prototype">
+		<property name="dihService"><ref bean="dihService"/></property>
+		<property name="agentFeeDao"><ref bean="agentFeeDao"/></property>
+	</bean>
+
+	<bean name="webserviceResource" id="webserviceResource"   class="com.ailk.eaap.op2.serviceagent.servlet.WebServiceResource" scope="prototype">
+		<property name="dihService"><ref bean="dihService"/></property>
+		<property name="cacheService"><ref bean="cacheService"/></property>
+	</bean>
+
+	
+	<bean id="dihService" class="com.ailk.eaap.op2.serviceagent.deal.service.DIHService">
+		<property name="baseValidateServ"><ref bean="baseValidateServ"/></property>
+		<property name="routeServ"><ref bean="RouteServ"/></property>
+		<property name="flowControlServ"><ref bean="flowcontrol"/></property>
+		<property name="logDealServ"><ref bean="logDealServ"/></property>
+		<property name="defalutHead">
+        	<value>${defalutHead}</value>
+        </property>
+    </bean>
+    
+<!-- 
+	<bean id="generalService" class="com.ailk.eaap.op2.serviceagent.deal.service.GeneralService">
+		
+		<property name="routeServ"><ref bean="RouteServ"/></property>
+		<property name="flowControlServ"><ref bean="flowcontrol"/></property>
+		<property name="logDealServ"><ref bean="logDealServ"/></property>
+		<property name="cacheService"><ref bean="cacheService"/></property>
+		<property name="validateServ"><ref bean="validateServ"/></property>
+    </bean>
+  -->
+     
+	<bean id="baseValidateServ" class="com.ailk.eaap.op2.serviceagent.validate.service.BaseValidateServ">
+    	<property name="cacheService"><ref bean="cacheService"/></property>
+    	<property name="validateServ"><ref bean="validateServ"/></property>
+    	<property name="defalutHead">
+        	<value>${defalutHead}</value>
+        </property>
+    </bean>
+	
+     
+    
+    <bean id="ServiceExchangeService"
+        class="com.ailk.eaap.op2.serviceagent.route.service.ServiceExchangeService">
+        <property name="processorFactory">
+        	<ref bean="ProcessorFactory"/>
+        </property>
+       
+        <property name="defaultTime">
+        	<value>${defaultTime}</value>
+        </property>
+    </bean>
+ 
+    <bean id="RouteServ"
+        class="com.ailk.eaap.op2.serviceagent.route.service.RouteServ">
+        <property name="serviceExchangeService">
+        	<ref bean="ServiceExchangeService"/>
+        </property>
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <property name="evaluatorFactory"><ref bean="evaluatorFactory"/></property>
+    </bean>
+    
+    <bean id="evaluatorFactory" class="com.ailk.eaap.op2.serviceagent.route.service.EvaluatorFactory">
+    </bean>
+    
+    <bean id="ProcessorFactory"
+        class="com.ailk.eaap.op2.serviceagent.route.service.ProcessorFactory">
+        
+        <property name="nodeDescValidateServ"><ref bean="nodeDescValidateServ"/></property>
+        <property name="httpEndpointProcessor"><ref bean="httpEndpointProcessor"/></property>
+        <property name="webserviceEndpointProcessor"><ref bean="webserviceEndpointProcessor"/></property>
+        <property name="flowControlServ"><ref bean="flowcontrol"/></property>
+        <property name="proofServ"><ref bean="proofServ"/></property>
+        <property name="callEndpointProcessor"><ref bean="callEndpointProcessor"/></property>
+        <property name="obscureProcessor"><ref bean="obscureProcessor"/></property>
+        <property name="generateTokenProcessor"><ref bean="generateTokenProcessor"/></property>
+        <property name="inProcessor"><ref bean="InProcessor"/></property>
+        <property name="authProcessor"><ref bean="authProcessor"/></property>
+        <property name="jdbcEndpointProcessor"><ref bean="jdbcEndpointProcessor"/></property>
+        <property name="encryptProcessor"><ref bean="encryptProcessor"/></property>
+        <property name="asynProcessor"><ref bean="asynProcessor"/></property>
+        <property name="batchParseProcessor"><ref bean="batchParseProcessor"/></property>
+        <property name="circleEndpointProcessor"><ref bean="circleEndpointProcessor"/></property>
+        
+        <property name="socketCallProcesssor"><ref bean="socketCallProcesssor"/></property>
+        <property name="endProcessor"><ref bean="endProcessor"/></property>
+        <property name="accessTypeProcesssor"><ref bean="accessTypeProcesssor"/></property>
+        <property name="mapEnrichProcessor"><ref bean="mapEnrichProcessor"/></property>
+        <property name="orderDealProcessor"><ref bean="orderDealProcessor"/></property>
+        <property name="interceptionProcessor"><ref bean="interceptionProcessor"/></property>
+        <property name="templateReplaceProcessor"><ref bean="templateReplaceProcessor"/></property>
+  <!--    <property name="zipFileEndPointProcessor" ref="zipFileEndPointProcessor"></property> -->   
+        <property name="fetchFileEndPointProcessor" ref="fetchFileEndPointProcessor"></property>
+        <property name="removeFileEndPointProcessor" ref="removeFileEndPointProcessor"></property>
+     	<!-- 自定义端点处理 -->
+    </bean>
+    <bean id="httpEndpointProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.HttpEndpointProcessor">
+        <property name="dstFlowControlServ"><ref bean="dstFlowControlServ"/></property>
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <property name="timeOutControlServ"><ref bean="timeOutControlServ"/></property>
+    </bean>
+    <bean id="webserviceEndpointProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.WebserviceEndpointProcessor">
+    </bean>
+    <bean id="authProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.AuthProcessor">
+    </bean>
+    
+    <bean id="InProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.InProcessor">
+    </bean>
+    
+    <bean id="endProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.EndProcessor">
+    </bean>
+    <bean id="accessTypeProcesssor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.AccessTypeProcesssor">
+    </bean>
+    <bean id="flowcontrol"
+        class="com.ailk.eaap.op2.serviceagent.validate.service.FlowControlServ">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+	<bean id="validateServ"
+        class="com.ailk.eaap.op2.serviceagent.validate.service.ValidateServ">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+    <bean id="proofServ"
+        class="com.ailk.eaap.op2.serviceagent.validate.service.ProofServ">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+    <bean id="nodeDescValidateServ"
+        class="com.ailk.eaap.op2.serviceagent.validate.service.NodeDescValidateServ">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <property name="validateServ"><ref bean="validateServ"/></property>
+    </bean>
+
+
+    <!-- transformer v2 -->
+    <bean id="obscureProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.ObscureProcessor">
+    </bean>
+    <bean id="jdbcEndpointProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.JdbcEndpointProcessor">
+    </bean>
+    
+    <bean id="generateTokenProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.GenerateTokenProcessor">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <property name="appAccTokenDao"><ref bean="appAccTokenDao"/></property>
+    </bean>
+    
+    <bean id="dstFlowControlServ"
+        class="com.ailk.eaap.op2.serviceagent.validate.service.DstFlowControlServ">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+    
+    <bean id="batchParseProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.BatchParseProcessor">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <property name="xdmClientTemplate"><ref bean="xdmClientTemplate"/></property>
+        <!--  
+        <property name="defalutHead">
+        	<value>${defalutHead}</value>
+        </property>-->
+        <property name="defalutHead">
+        	<value>TcpCont</value>
+        </property>
+    </bean>
+    
+    <bean id="xdmClientTemplate" class="com.linkage.crmdep.xdp.XdmClientTemplate">
+	</bean>
+    
+    <bean id="timeOutControlServ"
+        class="com.ailk.eaap.op2.serviceagent.route.service.TimeOutControlServ">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <property name="url"><value>${url}</value></property>
+    </bean>
+    
+    
+     <bean id="encryptProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.EncryptProcessor">
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+    
+     <bean id="callEndpointProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.CallEndpointProcessor">
+        <property name="dstFlowControlServ"><ref bean="dstFlowControlServ"/></property>
+        <property name="cacheService"><ref bean="cacheService"/></property>
+        <!-- 
+        <property name="timeOutControlServ"><ref bean="timeOutControlServ"/></property>
+         -->
+        <property name="defaultTime"><value>${defaultTime}</value></property>
+    </bean>
+    
+    <bean id="socketCallProcesssor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.SocketCallProcessor">
+        <property name="tcpFactory"><ref bean="tcpFactory"/></property>
+        <property name="cacheService"><ref bean="cacheService"/></property>
+    </bean>
+    
+    <bean id="tcpFactory"
+        class="com.ailk.eaap.op2.serviceagent.socket.tcp.connection.TcpConnectionFactoryBean">
+    </bean>
+    
+    <bean id="socketService"
+        class="com.ailk.eaap.op2.serviceagent.socket.SocketService">
+        <property name="dihService"><ref bean="dihService"/></property>
+        <property name="port"><value>${port}</value></property>
+        <property name="threadnum"><value>${threadnum}</value></property>
+    </bean>
+    
+    
+    <bean id="asynProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.AsynProcessor">
+        <property name="queueIHelper"><ref bean="asynQueueHelper"/></property>
+    </bean>
+    
+    <bean id="circleEndpointProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.CircleEndpointProcessor">
+        <property name="routeServ"><ref bean="RouteServ"/></property>
+    </bean>
+    
+    <bean id="mapEnrichProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.MapEnrichProcessor">
+        
+    </bean>
+    
+    <bean id="interceptionProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.InterceptionProcessor">
+    </bean>
+    
+    <bean id="templateReplaceProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.TemplateReplaceProcessor">
+    </bean>
+    
+    <bean id="orderDealProcessor"
+        class="com.ailk.eaap.op2.serviceagent.route.service.OrderDealProcessor">
+    </bean>
+    <bean id="asynQueueHelper" class="com.ailk.eaap.op2.common.JavaQueueHelper">
+		<property name="javaQueue"><ref bean="asynJavaQueue"/></property>
+	</bean>
+    
+    <bean id="asynJavaQueue" class="com.ailk.eaap.op2.common.JavaQueue">
+	</bean>
+	
+	
+	<bean id="asynThreadManagerService"
+        class="com.ailk.eaap.op2.serviceagent.async.AsynThreadManagerServiceImpl">
+        <property name="queueIHelper">
+        	<ref bean="asynQueueHelper"/>
+        </property>
+        <property name="routeServ">
+        	<ref bean="RouteServ"/>
+        </property>
+        <property name="threadNum">
+        	<value>${threadnum}</value>
+        </property>
+        <property name="defalutHead">
+        	<value>${defalutHead}</value>
+        </property>
+    </bean>
+    
+    <bean id="techTask" class="com.ailk.eaap.op2.serviceagent.task.TechTaskJob" >
+    	<property name="cacheService"><ref bean="cacheService"/></property>
+    	<property name="routeServ"><ref bean="RouteServ"/></property>
+    	<property name="logDealServ"><ref bean="logDealServ"/></property>
+	</bean>
+	
+    <bean id="taskListener" class="com.ailk.eaap.op2.serviceagent.task.TaskListener" >
+    	<property name="taskJobService"><ref bean="techTask"/></property>
+	</bean>
+	
+	
+	
+	
+	<bean id ="taskThreadManager"  class="com.ailk.eaap.op2.serviceagent.task.TaskThreadManager" >
+		<property name ="threadNum"><value>1</value></property>
+		<property name="taskListeners">
+			<list>
+			 <ref bean="taskListener"/>
+			</list>
+		</property>
+	</bean>
+	
+	
+	<bean id="protocolValidateSer" class="com.ailk.eaap.op2.serviceagent.validate.service.ProtocolValidateServ">
+		<property name="cacheService"><ref bean="cacheService"/></property>
+	</bean>
+	<bean id="restController" class="com.ailk.eaap.op2.serviceagent.protocol.RestController">
+		<property name="routeServ"><ref bean="RouteServ"/></property>
+		<property name="flowControlServ"><ref bean="flowcontrol"/></property>
+		<property name="logDealServ"><ref bean="logDealServ"/></property>
+		<property name="cacheService"><ref bean="cacheService"/></property>
+		<property name="protocolValidateSer"><ref bean="protocolValidateSer"/></property>
+		<property name="validateServ"><ref bean="validateServ"/></property>
+	</bean>
+	<bean id="httpController" class="com.ailk.eaap.op2.serviceagent.protocol.HttpController">
+		<property name="routeServ"><ref bean="RouteServ"/></property>
+		<property name="flowControlServ"><ref bean="flowcontrol"/></property>
+		<property name="logDealServ"><ref bean="logDealServ"/></property>
+		<property name="cacheService"><ref bean="cacheService"/></property>
+		<property name="protocolValidateSer"><ref bean="protocolValidateSer"/></property>
+		<property name="validateServ"><ref bean="validateServ"/></property>
+	</bean>
+	<bean id="webServiceController" class="com.ailk.eaap.op2.serviceagent.protocol.WebServiceController">
+		<property name="routeServ"><ref bean="RouteServ"/></property>
+		<property name="flowControlServ"><ref bean="flowcontrol"/></property>
+		<property name="logDealServ"><ref bean="logDealServ"/></property>
+		<property name="cacheService"><ref bean="cacheService"/></property>
+		<property name="protocolValidateSer"><ref bean="protocolValidateSer"/></property>
+		<property name="validateServ"><ref bean="validateServ"/></property>
+	</bean>
+	
+	<!-- socket server -->
+	<bean id="socketServer" class="com.ailk.eaap.op2.serviceagent.socket.SSLSocketServer">
+		<property name="keystore"><value>${keystore}</value></property>
+		<property name="keystorePasswd"><value>${keystoreWd}</value></property>
+		<property name="port"><value>${socketPort}</value></property>
+		<property name="sSLSocketServerHandler"><ref bean="sSLSocketServerHandler"/></property>
+	</bean>
+	<bean id="sSLSocketServerHandler" class="com.ailk.eaap.op2.serviceagent.socket.SSLSocketServerHandler">
+		<property name="socketServiceProxy"><ref bean="socketServiceProxy"/></property>
+	</bean>
+	<bean id="socketServiceProxy" class="com.ailk.eaap.op2.serviceagent.socket.SocketServiceProxy">
+		<property name="socketController"><ref bean="socketController"/></property>
+	</bean>
+	<bean id="socketController" class="com.ailk.eaap.op2.serviceagent.protocol.SocketController">
+		<property name="routeServ"><ref bean="RouteServ"/></property>
+		<property name="flowControlServ"><ref bean="flowcontrol"/></property>
+		<property name="logDealServ"><ref bean="logDealServ"/></property>
+		<property name="cacheService"><ref bean="cacheService"/></property>
+		<property name="protocolValidateSer"><ref bean="protocolValidateSer"/></property>
+		<property name="validateServ"><ref bean="validateServ"/></property>
+	</bean>
+	
+	<!--这个bean是作为切面    -->
+    <bean id="messageBoHisAspect" class="com.ailk.eaap.op2.serviceagent.aop.MessageBOHisAspect"></bean>
+		
+	 <aop:config>
+        <aop:aspect ref="messageBoHisAspect">
+            <aop:pointcut id="exchange" expression="execution(* com.ailk.eaap.op2.serviceagent.route.service.ServiceExchangeService.exchange(..))"/>
+            <aop:pointcut id="route" expression="execution(* com.ailk.eaap.op2.serviceagent.route.service.RouteServ.route(..))"/>
+            <aop:before pointcut-ref="exchange" method="beforeExchange"/> 
+            <aop:after pointcut-ref="exchange" method="afterExchange"/> 
+            <aop:after pointcut-ref="route" method="afterRoute"/> 
+        </aop:aspect>
+     </aop:config>
+</beans>

@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:p="http://www.springframework.org/schema/p" 
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	
+	<!-- 
+	<bean id="serviceAgentpropertyConfigurer" class="com.ailk.eaap.o2p.common.spring.config.EncryptPropertyPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+            <list>
+            	<value>classpath:eaap_common.properties</value>
+            </list>
+        </property>
+	</bean> -->
+	
+	<!-- 配置线程池 -->  
+	<bean id ="taskExecutor"  class ="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" >  
+	    <!-- 线程池维护线程的最少数量 -->  
+	<property name ="corePoolSize"><value>${batch.corePoolSize}</value></property>  
+	    <!-- 线程池维护线程所允许的空闲时间 -->  
+	<property name ="keepAliveSeconds" ><value>${batch.keepAliveSeconds}</value></property>
+	    <!-- 线程池维护线程的最大数量 -->  
+	<property name ="maxPoolSize" ><value>${batch.maxPoolSize}</value></property>  
+	    <!-- 线程池所使用的缓冲队列 -->  
+	<property name ="queueCapacity"><value>${batch.queueCapacity}</value></property>  
+	</bean>
+	
+	<bean id="simpleAsyncTaskExecutor"
+		class="org.springframework.core.task.SimpleAsyncTaskExecutor">
+	</bean>
+	
+	<bean id="batchService"
+		class="com.ailk.eaap.op2.serviceagent.route.service.batch.BatchServiceImpl">
+		<property name ="repeatService" ref ="repeatService" />  
+		<property name ="processorFactory" ref ="ProcessorFactory" />  
+	</bean>
+	
+	<bean id="repeatService"
+		class="com.ailk.eaap.op2.serviceagent.route.service.batch.RepeatServiceImpl">
+		<property name ="taskExecutor" ref ="simpleAsyncTaskExecutor" />  
+		<property name ="routeServ" ref ="RouteServ" /> 
+	</bean>
+	
+	<bean id="flatFileReaderEndpoint"
+        class="com.ailk.eaap.op2.serviceagent.route.service.FlatFileReaderEndpoint">
+    </bean>
+	<bean id="xmlFileReaderEndpoint"
+        class="com.ailk.eaap.op2.serviceagent.route.service.XmlFileReaderEndpoint">
+    </bean>
+</beans>
